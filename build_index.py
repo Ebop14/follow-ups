@@ -1,21 +1,30 @@
 #!/usr/bin/env python3
-"""Build a FAISS vector index from the deals table in emails.db."""
+"""Build a FAISS vector index and BM25 corpus from the deals table in emails.db."""
 
 import argparse
 import json
 import os
+import pickle
+import re
 import sqlite3
 
 import faiss
 import numpy as np
+from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
 
 DB_PATH = "emails.db"
 INDEX_DIR = "./faiss_index"
 INDEX_FILE = os.path.join(INDEX_DIR, "deals.index")
 META_FILE = os.path.join(INDEX_DIR, "deals_meta.json")
+BM25_FILE = os.path.join(INDEX_DIR, "bm25.pkl")
 MODEL_NAME = "all-MiniLM-L6-v2"
 BATCH_SIZE = 500
+
+
+def tokenize(text: str) -> list[str]:
+    """Lowercase and split on non-alphanumeric characters."""
+    return re.findall(r"[a-z0-9]+", text.lower())
 
 
 def load_deals():
@@ -70,6 +79,13 @@ def build_index(rebuild=False):
     faiss.write_index(index, INDEX_FILE)
     with open(META_FILE, "w") as f:
         json.dump(metadata, f)
+
+    # Build BM25 index
+    print("Building BM25 index...")
+    tokenized_corpus = [tokenize(t) for t in texts]
+    bm25 = BM25Okapi(tokenized_corpus)
+    with open(BM25_FILE, "wb") as f:
+        pickle.dump(bm25, f)
 
     print(f"Done. {len(rows)} deals indexed in {INDEX_DIR}/")
 

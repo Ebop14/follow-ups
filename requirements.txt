@@ -5,3 +5,5 @@ anthropic
 faiss-cpu
 python-dotenv
 sentence-transformers
+rank-bm25
+flask

@@ -1,5 +1,9 @@
 credentials.json
 token.json
 emails.db
+emails.db-journal
 venv/
 .env
+__pycache__/
+faiss_index/
+bm25.pkl
